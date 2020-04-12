@@ -1,18 +1,23 @@
 import React from 'react';
 
-import './App.css';
 import "react-datepicker/dist/react-datepicker.css";
+import './App.css';
 
 import DatePicker from "react-datepicker";
 
-import { DATE_MIN, IndexedStateData, fetchCovidTrackingDailyData, parseDate } from "./CovidTracking";
+import { DATE_MIN,
+         IndexedStateData,
+         fetchCovidTrackingDailyData,
+         parseDate } from "./CovidTracking";
 import UsMapChart from "./MapChartUs";
+import PlaybackControls from "./PlaybackControls";
 
 interface AppState {
     date: Date;
     minDate: Date;
     maxDate: Date;
     stateData: IndexedStateData;
+    player: null | ReturnType<typeof setInterval>;
 }
 
 class App extends React.Component<any,AppState> {
@@ -24,13 +29,38 @@ class App extends React.Component<any,AppState> {
             date: today,
             minDate: DATE_MIN,
             maxDate: today,
-            stateData: {}
+            stateData: {},
+            player: null
         };
         this.onDateChange = this.onDateChange.bind(this);
     }
 
     onDateChange(date:Date) {
         this.setState({ date: date });
+    }
+
+    rewind() {
+        this.setState({ date: this.state.minDate });
+    }
+
+    stepBackOneDay() {
+        const previousDay = new Date(this.state.date);
+        previousDay.setDate(this.state.date.getDate() - 1);
+        if (previousDay >= this.state.minDate) {
+            this.setState({ date: previousDay });
+        }
+    }
+
+    stepForwardOneDay() {
+        const nextDay = new Date(this.state.date);
+        nextDay.setDate(this.state.date.getDate() + 1);
+        if (nextDay <= this.state.maxDate) {
+            this.setState({ date: nextDay });
+        }
+    }
+
+    fastForward() {
+        this.setState({ date: this.state.maxDate });
     }
 
     componentDidMount() {
@@ -44,15 +74,48 @@ class App extends React.Component<any,AppState> {
         });
     }
 
+    play() {
+        if (this.state.player === null) {
+            this.setState({ player: setInterval(() => {
+                if (this.state.date < this.state.maxDate) {
+                    this.stepForwardOneDay();
+                } else {
+                    this.pause();
+                }
+            }, 500) });
+        }
+    }
+
+    pause() {
+        if (this.state.player) {
+            clearInterval(this.state.player);
+            this.setState({ player: null });
+        }
+    }
+
     render() {
         return (
             <>
             <div className="App">
+				<PlaybackControls
+                  className="controls"
+				  isPlaying={this.state.player !== null}
+                  onPlaybackChange={
+                      isPlaying => isPlaying ? this.pause() : this.play()
+                  }
+				  hasPrevious={() => this.state.date > this.state.minDate}
+				  hasNext={() => this.state.date < this.state.maxDate}
+				  onPrevious={() => this.stepBackOneDay()}
+				  onNext={() => this.stepForwardOneDay()}
+				  onRewind={() => this.rewind()}
+				  onFastForward={() => this.fastForward()}
+				/>
                 <DatePicker
                     minDate={this.state.minDate}
                     maxDate={this.state.maxDate}
                     selected={this.state.date}
                     onChange={this.onDateChange} />
+
                 <h1>COVID-19 Deaths per Million</h1>
                 <UsMapChart
                     stateData={this.state.stateData}

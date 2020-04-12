@@ -20,5 +20,20 @@ h1 {
 
 .react-datepicker-wrapper {
     float: right;
-    margin-right: 200px;
+    margin-right: 50px;
+}
+
+.controls {
+    float: right;
+    margin-right: 50px;
+}
+
+.controls button {
+    height: 25px;
+    width: 25px;
+}
+
+.credits {
+    float: right;
+    margin-right: 50px;
 }

@@ -1,30 +1,35 @@
 {
-    "name": "status",
-    "version": "0.1.0",
+    "name": "novel-coronavir.us",
+    "version": "0.2.0",
+    "description": "SARS-CoV-2 epidemic data visualization",
+    "homepage": "http://novel-coronavir.us",
     "private": true,
     "dependencies": {
-        "@types/d3-geo": "^1.11.1",
-        "@types/react": "^16.9.33",
-        "@types/react-datepicker": "^2.11.0",
-        "@types/react-dom": "^16.9.6",
-        "@types/react-simple-maps": "^1.0.0",
         "d3-geo": "^1.11.1",
-        "react": "^16.9.32",
+        "prop-types": "15.7.2",
+        "react": "^16.9.0",
         "react-datepicker": "^2.14.1",
-        "react-dom": "^16.9.6",
-        "react-scripts": "3.4.1",
+        "react-dom": "16.9.0",
+        "react-player-controls": "^1.1.0",
         "react-simple-maps": "^2.0.0"
     },
     "devDependencies": {
         "@testing-library/jest-dom": "^5.4.0",
         "@testing-library/react": "^10.0.2",
         "@testing-library/user-event": "^10.0.1",
+        "@types/d3-geo": "^1.11.1",
         "@types/jest": "^25.2.1",
+        "@types/react": "16.9.23",
+        "@types/react-datepicker": "^2.11.0",
+        "@types/react-dom": "^16.9.6",
+        "@types/react-simple-maps": "^1.0.0",
         "@typescript-eslint/eslint-plugin": "^2.27.0",
         "@typescript-eslint/parser": "^2.27.0",
         "eslint-config-react-app": "^5.2.1",
+        "react-scripts": "3.4.1",
         "typescript": "^3.8.3"
     },
+    "repository": "github:teleological/novel-coronavir.us",
     "scripts": {
         "start": "react-scripts start",
         "build": "react-scripts build",
@@ -45,5 +50,9 @@
             "last 1 firefox version",
             "last 1 safari version"
         ]
+    },
+    "license": "MIT",
+    "author": {
+        "name": "Riley Martinez-Lynch"
     }
 }

@@ -136,16 +136,20 @@ class StateShape extends StateDatumComponent<StateShapeProps> {
 }
 
 function calculateFill(deathPerMill:number) {
-    if (deathPerMill >= 200) {
-        return "#CC0808";
+    if (deathPerMill >= 800) {
+        return "#C00";
+    } else if (deathPerMill >= 400) {
+        return "#C22";
+    } else if (deathPerMill >= 200) {
+        return "#C44";
     } else if (deathPerMill >= 100) {
-        return "#CC6666";
+        return "#C66";
     } else if (deathPerMill >= 50) {
-        return "#CC8888";
+        return "#C88";
     } else if (deathPerMill >= 25) {
-        return "#CCAAAA";
+        return "#CAA";
     } else if (deathPerMill >= 12.5) {
-        return "#CCBBBB";
+        return "#CBB";
     } else {
         return "#9998A3";
     }
