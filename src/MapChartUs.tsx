@@ -10,22 +10,22 @@ import {
 } from "react-simple-maps";
 
 // mapping of fips-postal abbrev, pop, etc.
-import stateConfig from "./data/allStates.json";
+import STATES from "./data/allStates.json";
 
 // https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json
-import statesGeo from "./data/us-atlas-3-states-10m.json";
+import SHAPES from "./data/us-atlas-3-states-10m.json";
 
-// No CORS :(
-// https://covidtracking.com/api/v1/states/daily.json
-import covidDaily from "./data/daily-covidtracking.json";
+const URL_COVID = "https://covidtracking.com/api/v1/states/daily.json";
 
 interface StateConfig {
     id: string;  // abbrev
     val: string; // fips
     pop: number;
     urban: number;
-    offset?: number[];
+    offset?: number[]; // can't be read from json as a Point tuple
 }
+
+type IndexedStateConfigs = { [fips: string] : StateConfig };
 
 interface CovidDaily {
     hash: string;
@@ -59,96 +59,81 @@ interface CovidDaily {
     death?: number | null;
 }
 
-class CovidState {
-    fips: string;
-    abbrev: string;
-    offset: Point;
-    pop: number;
-    deaths: number;
-    deathsIncrease: number;
+type IndexedStateData = { [fips:string] : CovidDaily[] };
 
-    constructor(fips:string,
-                abbrev:string,
-                offset:Point,
-                pop:number,
-                deaths:number,
-                deathsIncrease:number) {
-        this.fips = fips;
-        this.abbrev = abbrev;
-        this.offset = offset;
-        this.pop = pop;
-        this.deaths = deaths;
-        this.deathsIncrease = deathsIncrease;
-    }
-
-    useAnnotation() {
-        return (this.offset[0] * this.offset[1]) !== 0;
-    }
-
-    deathsPerMillion() {
-        const popMill = this.pop / 1000000;
-        return this.deaths / popMill;
-    }
-
-    growthFactor() {
-        return this.deaths === 0 ?
-            0 : (this.deathsIncrease / this.deaths) * 100;
-    }
+interface UsMapChartProps {
+    shapes: any;
+    width: number;
+    projection: string;
+    stateConfigs: IndexedStateConfigs;
 }
 
-function buildCovidByState(stateConfig:StateConfig[], covidDaily:CovidDaily[]) {
-    const covidByState:{ [fips: string] : CovidState } = {};
-    stateConfig.forEach(config => {
-        // ASSUME: first value found for state is newest
-        const covid:CovidDaily | undefined =
-            covidDaily.find(s => s.state === config!.id);
-
-        const offset:Point =
-            config.offset ? [config.offset[0], config.offset[1]] : [0, 0];
-
-        const state =
-            new CovidState(config.val, config.id, offset, config.pop,
-                           (covid ? covid.death : null) || 0,
-                           (covid ? covid.deathIncrease : null) || 0)
-        covidByState[state.fips] = state;
-    });
-    return covidByState;
+interface UsMapChartState {
+    stateData: IndexedStateData;
 }
 
-const covidByState = buildCovidByState(stateConfig, covidDaily);
+class UsMapChart extends React.Component<UsMapChartProps, UsMapChartState> {
 
-class UsMapChart extends React.Component {
+    static defaultProps:Partial<UsMapChartProps> = {
+        shapes: SHAPES,
+        width: 900,
+        projection: "geoAlbersUsa",
+        stateConfigs: buildIndexedStateConfigs(STATES)
+    };
+
+    constructor(props:UsMapChartProps) {
+        super(props);
+        this.state = { stateData: {} };
+    }
+
+    componentDidMount() {
+        const headers:any = { "Accept": "application/json" };
+        fetch(URL_COVID, { headers: headers }).
+            then(response => {
+                if (response.status === 200) {
+                    response.json().then(data => {
+                        const dataByState = indexDataByState(data);
+                        this.setState({ stateData : dataByState })
+                    });
+                } else {
+                    console.log("Failed to fetch data: " + response.status);
+                }
+            });
+    }
 
     render() {
         return (
-            <ComposableMap projection="geoAlbersUsa" width={900}>
-                <Geographies geography={statesGeo}>
+            <ComposableMap
+                projection={this.props.projection}
+                width={this.props.width}>
+                <Geographies geography={this.props.shapes}>
                     {({ geographies }) => (
                         <>
                         {
                             geographies.map(geo => {
-                                const state = covidByState[geo.id];
-                                return (
+                                const fips = geo.id;
+                                const config = this.props.stateConfigs[fips];
+                                const data = this.state.stateData[fips];
+                                const latest = data ? data[0] : undefined;
+                                return config ? (
                                     <StateShape
                                         key={geo.rsmKey + "-shape"}
                                         geo={geo}
-                                        state={state}/>
-                                );
+                                        config={config}
+                                        datum={latest} />
+
+                                ) : null;
                             })
                         }
-                        // markup has to be rendered after states
-                        // (or neighboring states paint over markup)
+                        // markup has to be rendered after Geography components
+                        // or neighboring states paint over markup
                         {
                             geographies.map(geo => {
-                                const centroid = geoCentroid(geo);
-                                const state = covidByState[geo.id];
-                                return (centroid[0] > -160 && centroid[0] < -67) ? (
-                                    <StateMarkup
-                                        key={geo.rsmKey + "-markup"}
-                                        label={state.abbrev}
-                                        centroid={centroid}
-                                        state={state} />
-                                ) : null;
+                                const fips = geo.id;
+                                const config = this.props.stateConfigs[fips];
+                                const data = this.state.stateData[fips];
+                                const latest = data ? data[0] : undefined;
+                                return renderStateMarkup(geo, config, latest);
                             })
                         }
                         </>
@@ -157,37 +142,63 @@ class UsMapChart extends React.Component {
             </ComposableMap>
         );
     }
-};
+}
+
+function buildIndexedStateConfigs(stateConfigs:StateConfig[]) {
+    const stateConfigByFips:IndexedStateConfigs = {};
+    stateConfigs.forEach(config => stateConfigByFips[config.val] = config);
+    return stateConfigByFips;
+}
+
+function indexDataByState(data:CovidDaily[]) {
+    const dataByState:IndexedStateData = {};
+    data.forEach(datum => {
+        dataByState[datum.fips] || (dataByState[datum.fips] = []);
+        dataByState[datum.fips].push(datum);
+    });
+    return dataByState;
+}
+
+interface StateDatumProps {
+    config: StateConfig;
+    datum?: CovidDaily;
+}
+
+class StateDatumComponent<T extends StateDatumProps> extends React.Component<T> {
+    deathsPerMillion() {
+        let deaths;
+        if (this.props.datum && this.props.datum.death) {
+            const popMill = this.props.config.pop / 1000000;
+            deaths = this.props.datum.death / popMill;
+        } else {
+            deaths = 0;
+        }
+        return deaths;
+    }
+
+    growthFactor() {
+        return (!this.props.datum || this.props.datum.death === 0) ?
+            0 : (this.props.datum.deathIncrease! / this.props.datum.death!) * 100;
+    }
+}
 
 interface StateShapeProps {
     geo: any;
-    state: CovidState;
+    config: StateConfig;
+    datum?: CovidDaily;
 }
 
-interface StateShapeState {
-    deaths: number;
-}
-
-class StateShape extends React.Component<StateShapeProps, StateShapeState> {
-
-    constructor(props:StateShapeProps) {
-        super(props);
-        this.state = {
-            deaths: props.state ? props.state.deathsPerMillion() : 0
-        };
-    }
-
-    render() {
+class StateShape extends StateDatumComponent<StateShapeProps> {
+    render () {
         return (
             <Geography
-                key={this.props.geo.rsmKey}
+                key={this.props.geo.rsmKey + "-shape"}
                 stroke="#FFF"
                 geography={this.props.geo}
-                fill={calculateFill(this.state.deaths)}
+                fill={calculateFill(this.deathsPerMillion())}
             />
         );
     }
-
 }
 
 function calculateFill(deathPerMill:number) {
@@ -206,59 +217,61 @@ function calculateFill(deathPerMill:number) {
     }
 }
 
+function renderStateMarkup(geo:any, config:StateConfig, datum?:CovidDaily) {
+    const centroid = geoCentroid(geo);
+    return (centroid[0] > -160 && centroid[0] < -67) ? (
+        <StateMarkup
+            key={geo.rsmKey + "-markup"}
+            config={config}
+            centroid={centroid}
+            datum={datum} />
+    ) : null;
+}
+
 interface StateMarkupProps {
-    label: string;
+    config: StateConfig;
     centroid: Point;
-    state: CovidState;
+    datum?: CovidDaily;
 }
 
 class StateMarkup extends React.Component<StateMarkupProps> {
+    useAnnotation() {
+        const offset = this.props.config.offset;
+        return offset && ((offset[0] !== 0) || (offset[1] !== 0));
+    }
+
     render() {
-        return this.props.state.useAnnotation() ?
+        return this.useAnnotation() ?
             (<StateAnnotation
-                label={this.props.label}
                 centroid={this.props.centroid}
-                offset={this.props.state.offset}
-                state={this.props.state} />) :
+                config={this.props.config}
+                datum={this.props.datum} />) :
             (<StateMarker
-                label={this.props.label}
                 centroid={this.props.centroid}
-                state={this.props.state} />);
+                config={this.props.config}
+                datum={this.props.datum} />);
     }
 }
 
 interface StateMarkerProps {
-    label: string;
     centroid: Point;
-    state: CovidState;
+    config: StateConfig;
+    datum?: CovidDaily;
 }
 
-interface StateMarkerState {
-    deaths: number;
-    growthFactor: number;
-}
-
-class StateMarker extends React.Component<StateMarkerProps,StateMarkerState> {
-    constructor(props:StateMarkerProps) {
-        super(props);
-        this.state = {
-            deaths: props.state.deathsPerMillion(),
-            growthFactor: props.state.growthFactor()
-        };
-    }
-
+class StateMarker extends StateDatumComponent<StateMarkerProps> {
     render() {
         return (
             <g>
                 <Marker coordinates={this.props.centroid}>
                     <text y="2" fontSize={14} textAnchor="middle">
-                        {this.props.label}
+                        {this.props.config.id}
                     </text>
                     <text y="14" fontSize={9} textAnchor="middle">
-                        {this.state.deaths.toFixed(0)}
+                        {this.deathsPerMillion().toFixed(0)}
                     </text>
                     <text y="26" fontSize={9} textAnchor="middle">
-                        {this.state.growthFactor.toFixed(1)}%
+                        {this.growthFactor().toFixed(1)}%
                     </text>
                 </Marker>
             </g>
@@ -267,45 +280,39 @@ class StateMarker extends React.Component<StateMarkerProps,StateMarkerState> {
 }
 
 interface StateAnnotationProps {
-    label: string;
     centroid: Point;
-    offset: Point;
-    state: CovidState;
+    config: StateConfig;
+    datum?: CovidDaily;
 }
 
-interface StateAnnotationState {
-    deaths: number;
-    growthFactor: number;
-}
+class StateAnnotation extends StateDatumComponent<StateAnnotationProps> {
 
-class StateAnnotation extends React.Component<StateAnnotationProps, StateAnnotationState> {
-    constructor(props:StateAnnotationProps) {
-        super(props);
-        this.state = {
-            deaths: props.state.deathsPerMillion(),
-            growthFactor: props.state.growthFactor()
-        };
+    offset() {
+        const offset = this.props.config.offset;
+        return offset ? [offset[0], offset[1]] : [0, 0];
     }
 
     render() {
         return (
-            <Annotation
-                subject={this.props.centroid}
-                dx={this.props.offset[0]}
-                dy={this.props.offset[1]}
-                curve={0}
-                connectorProps={{}}
-            >
-                <text x={4} fontSize={14} alignmentBaseline="middle">
-                    {this.props.label}
-                </text>
-                <text x="32" y="-4" fontSize={9} textAnchor="middle">
-                    {this.state.deaths.toFixed(1)}
-                </text>
-                <text x="32" y="8" fontSize={9} textAnchor="middle">
-                    {this.state.growthFactor.toFixed(0)}%
-                </text>
-            </Annotation>
+            <g>
+                <Annotation
+                    subject={this.props.centroid}
+                    dx={this.offset()[0]}
+                    dy={this.offset()[1]}
+                    curve={0}
+                    connectorProps={{}}
+                >
+                    <text x={4} fontSize={14} alignmentBaseline="middle">
+                        {this.props.config.id}
+                    </text>
+                    <text x="36" y="-4" fontSize={9} textAnchor="middle">
+                        {this.deathsPerMillion().toFixed(0)}
+                    </text>
+                    <text x="36" y="8" fontSize={9} textAnchor="middle">
+                        {this.growthFactor().toFixed(1)}%
+                    </text>
+                </Annotation>
+            </g>
         );
     }
 }
