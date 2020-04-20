@@ -2,7 +2,7 @@
 const URL_COVID = "https://covidtracking.com/api/v1/states/daily.json";
 
 // no data before March 4
-const DATE_MIN = new Date(2020, 3-1, 4);
+const DATE_MIN = new Date(2020, 2-1, 21);
 
 export interface CovidDaily {
     hash: string;
@@ -60,7 +60,7 @@ function indexDataByFips(data:CovidDaily[]) : IndexedStateData {
     return dataByFips;
 }
 
-function findDatum(data:CovidDaily[], date:Date) : CovidDaily | undefined {
+function findDatumForDate(data:CovidDaily[], date:Date) : CovidDaily | undefined {
     if (data) {
         const covidDate = formatCovidDate(date);
         return data.find(datum => datum.date === covidDate);
@@ -76,6 +76,16 @@ function formatCovidDate(date:Date) {
     return parseInt(dateString);
 }
 
+function findDatumForDeaths(data:CovidDaily[], deaths:number) : CovidDaily | undefined {
+    if (data) {
+        return data.find(datum => {
+            if (datum.death) {
+                return datum.death <= deaths;
+            }
+        });
+    }
+}
+
 function parseDate(date:number) : Date {
     const dateString = date.toString();
     return new Date(parseInt(dateString.substr(0,4)),
@@ -83,4 +93,4 @@ function parseDate(date:number) : Date {
                     parseInt(dateString.substr(6,2)));
 }
 
-export { DATE_MIN, fetchCovidTrackingDailyData, findDatum, parseDate };
+export { DATE_MIN, fetchCovidTrackingDailyData, findDatumForDate, findDatumForDeaths, parseDate, formatCovidDate };

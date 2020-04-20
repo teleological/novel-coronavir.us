@@ -82,7 +82,7 @@ class App extends React.Component<any,AppState> {
                 } else {
                     this.pause();
                 }
-            }, 500) });
+            }, 1000) });
         }
     }
 
@@ -116,11 +116,18 @@ class App extends React.Component<any,AppState> {
                     selected={this.state.date}
                     onChange={this.onDateChange} />
 
-                <h1>COVID-19 Deaths per Million</h1>
+                <hgroup>
+                    <h1>COVID-19 Deaths per Million</h1>
+                </hgroup>
+
                 <UsMapChart
                     stateData={this.state.stateData}
                     date={this.state.date} />
             </div>
+            <small className="legend">
+                Deaths doubled in: <b>&lt;= 1 week</b>, <i>&gt;= 2 weeks</i><br/>
+                🛑 = statewide stay-at-home; ⚠️ = partial closure
+            </small>
             </>
         );
     }

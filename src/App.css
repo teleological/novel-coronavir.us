@@ -15,7 +15,7 @@ svg {
 
 h1 {
     margin: 0;
-    font-size: 120%;
+    font-size: 80%;
 }
 
 .react-datepicker-wrapper {
@@ -31,9 +31,28 @@ h1 {
 .controls button {
     height: 25px;
     width: 25px;
+    -webkit-appearance: none !important;
+}
+
+small {
+    font-size: 50%;
+}
+
+.legend {
+    float: right;
+    margin-right: 50px;
 }
 
 .credits {
     float: right;
     margin-right: 50px;
+    margin-top: 0;
+}
+
+.heavy {
+    font-weight: bold;
+}
+
+.light {
+    font-style: italic;
 }
