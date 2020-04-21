@@ -9,8 +9,7 @@
   { "id": "DE", "val": "10", "pop": 973764, "urban": 83.3, "offset": [20, 0], "partial": 20200316, "stay": 20200324 },
   { "id": "DC", "val": "11", "pop": 705749, "urban": 100, "offset": [40, 50], "partial": 20200316, "stay": 20200401 },
   { "id": "FL", "val": "12", "pop": 21477737, "urban": 91.2, "partial": 20200317, "stay": 20200403 },
-  { "id": "GA", "val": "13", "pop": 10617423, "urban": 75.1, "partial": 20200324, "stay": 20200403 },
-
+  { "id": "GA", "val": "13", "pop": 10617423, "urban": 75.1, "partial": 20200324, "stay": 20200403, "lifted": 20200424 },
   { "id": "HI", "val": "15", "pop": 1415872, "urban": 91.9, "partial": 20200317, "stay": 20200325 },
   { "id": "ID", "val": "16", "pop": 1787065, "urban": 70.6, "stay": 20200325 },
   { "id": "IL", "val": "17", "pop": 12671821, "urban": 88.5, "partial": 20200316, "stay": 20200321 },

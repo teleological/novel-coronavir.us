@@ -9,13 +9,13 @@ import {
     Point
 } from "react-simple-maps";
 
-import { DATE_MIN, IndexedStateData, CovidDaily, findDatumForDate, findDatumForDeaths, parseDate, formatCovidDate } from "./CovidTracking";
+import { IndexedStateData, CovidDaily, findDatumForDate, findDatumForDeaths, parseDate } from "../CovidTracking";
 
 // mapping of fips-postal abbrev, pop, etc.
-import STATES from "./data/allStates.json";
+import STATES from "../data/allStates.json";
 
 // https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json
-import SHAPES from "./data/us-atlas-3-states-10m.json";
+import SHAPES from "../data/us-atlas-3-states-10m.json";
 
 interface StateConfig {
     id: string;  // abbrev
@@ -27,6 +27,8 @@ interface StateConfig {
     partialStart?: Date;
     stay: number | null;
     stayStart?: Date;
+    lifted?: number | null;
+    liftedStart?: Date;
 }
 
 type IndexedStateConfigs = { [fips: string] : StateConfig };
@@ -42,7 +44,7 @@ interface UsMapChartProps {
 
 class UsMapChart extends React.Component<UsMapChartProps> {
 
-    static defaultProps:Partial<UsMapChartProps> = {
+    static defaultProps : Partial<UsMapChartProps> = {
         shapes: SHAPES,
         width: 900,
         projection: "geoAlbersUsa",
@@ -90,12 +92,14 @@ class UsMapChart extends React.Component<UsMapChartProps> {
                                     findDatumForDeaths(data, (datum.death * 0.5)) : undefined;
 
                                 let orders;
-                                if (config && config.stayStart! && this.props.date >= config.stayStart!) {
+                                if (config && config.liftedStart! && this.props.date >= config.liftedStart!) {
+                                    orders = "🏁";
+                                } else if (config && config.stayStart! && this.props.date >= config.stayStart!) {
                                     orders = "🛑";
                                 } else if (config && config.partialStart! && this.props.date >= config.partialStart!) {
                                     orders = "⚠️";
                                 }
-                                return renderStateMarkup(geo, config, datum, half, orders);
+                                return SelectStateMarkup(geo, config, datum, half, orders);
                             })
                         }
                         </>
@@ -104,6 +108,7 @@ class UsMapChart extends React.Component<UsMapChartProps> {
             </ComposableMap>
         );
     }
+
 }
 
 function buildIndexedStateConfigs(stateConfigs:StateConfig[]) {
@@ -113,6 +118,8 @@ function buildIndexedStateConfigs(stateConfigs:StateConfig[]) {
             parseDate(config.partial) : undefined;
         config.stayStart = config.stay ?
             parseDate(config.stay) : undefined;
+        config.liftedStart = config.lifted ?
+            parseDate(config.lifted) : undefined;
         stateConfigByFips[config.val] = config
     });
     return stateConfigByFips;
@@ -124,43 +131,40 @@ interface StateDatumProps {
     half?: CovidDaily;
 }
 
-class StateDatumComponent<T extends StateDatumProps> extends React.Component<T> {
-    deathsPerMillion() {
-        let deaths;
-        if (this.props.datum && this.props.datum.death) {
-            const popMill = this.props.config.pop / 1000000;
-            deaths = this.props.datum.death / popMill;
-        } else {
-            deaths = 0;
-        }
-        return deaths;
+function deathsPerMillion(props:StateDatumProps) {
+    let deaths;
+    if (props.datum && props.datum.death) {
+        const popMill = props.config.pop / 1000000;
+        deaths = props.datum.death / popMill;
+    } else {
+        deaths = 0;
     }
+    return deaths;
+}
 
-    displayDeaths() {
-        const deaths = this.deathsPerMillion();
-        if (deaths > 0.5) {
-            return deaths.toFixed(0);
-        } else if (deaths > 0) {
-            return "<1";
-        } else {
-            return "0";
-        }
+function displayDeaths(props:StateDatumProps) {
+    const deaths = deathsPerMillion(props);
+    if (deaths > 0.5) {
+        return deaths.toFixed(0);
+    } else if (deaths > 0) {
+        return "<1";
+    } else {
+        return "0";
     }
+}
 
-    doubledInDays() {
-        if (this.props.datum && this.props.half) {
-            const dt2 = parseDate(this.props.datum.date);
-            const dt1 = parseDate(this.props.half.date);
-			return Math.floor(
-				(Date.UTC(dt2.getFullYear(), dt2.getMonth(), dt2.getDate()) -
-					 Date.UTC(dt1.getFullYear(), dt1.getMonth(), dt1.getDate()))
-				/ (1000 * 60 * 60 * 24)
-			);
-        } else {
-            return 0;
-        }
+function doubledInDays(props:StateDatumProps) {
+    if (props.datum && props.half) {
+        const dt2 = parseDate(props.datum.date);
+        const dt1 = parseDate(props.half.date);
+        return Math.floor(
+            (Date.UTC(dt2.getFullYear(), dt2.getMonth(), dt2.getDate()) -
+                 Date.UTC(dt1.getFullYear(), dt1.getMonth(), dt1.getDate()))
+            / (1000 * 60 * 60 * 24)
+        );
+    } else {
+        return 0;
     }
-
 }
 
 interface StateShapeProps {
@@ -170,18 +174,14 @@ interface StateShapeProps {
     half?: CovidDaily;
 }
 
-class StateShape extends StateDatumComponent<StateShapeProps> {
-    render () {
-        return (
-            <Geography
-                key={this.props.geo.rsmKey + "-shape"}
-                geography={this.props.geo}
-                stroke="#FFF"
-                fill={calculateFill(this.deathsPerMillion())}
-            />
-        );
-    }
-}
+const StateShape : React.FC<StateShapeProps> = (props) => (
+    <Geography
+        key={props.geo.rsmKey + "-shape"}
+        geography={props.geo}
+        stroke="#FFF"
+        fill={calculateFill(deathsPerMillion(props))}
+    />
+);
 
 function calculateFill(deathPerMill:number) {
     if (deathPerMill >= 800) {
@@ -203,7 +203,7 @@ function calculateFill(deathPerMill:number) {
     }
 }
 
-function renderStateMarkup(geo:any, config:StateConfig, datum?:CovidDaily, half?:CovidDaily, orders?:string) {
+const SelectStateMarkup = (geo:any, config:StateConfig, datum?:CovidDaily, half?:CovidDaily, orders?:string) => {
     const centroid = geoCentroid(geo);
     return (centroid[0] > -160 && centroid[0] < -67) ? (
         <StateMarkup
@@ -214,7 +214,7 @@ function renderStateMarkup(geo:any, config:StateConfig, datum?:CovidDaily, half?
             half={half}
             orders={orders} />
     ) : null;
-}
+};
 
 interface StateMarkupProps {
     config: StateConfig;
@@ -255,34 +255,31 @@ interface StateMarkerProps {
     orders?: string;
 }
 
-class StateMarker extends StateDatumComponent<StateMarkerProps> {
-    render() {
-        const fontClass = labelFontClass(this.doubledInDays());
-        return (
-            <g>
-                <Marker coordinates={this.props.centroid}>
-                    <text y="2" fontSize={12} textAnchor="middle" className={fontClass}>
-                        {this.props.config.id} {this.props.orders}
-                    </text>
-                    <text y="14" fontSize={9} textAnchor="middle" className={fontClass}>
-                        {this.displayDeaths()}
-                    </text>
-                </Marker>
-            </g>
-        );
-    }
-}
+const StateMarker : React.FC<StateMarkerProps> = (props) => {
+    const fontClass = labelFontClass(doubledInDays(props));
+    return (
+        <g>
+            <Marker coordinates={props.centroid}>
+                <text y="2" fontSize={12} textAnchor="middle" className={fontClass}>
+                    {props.config.id} {props.orders}
+                </text>
+                <text y="14" fontSize={9} textAnchor="middle" className={fontClass}>
+                    {displayDeaths(props)}
+                </text>
+            </Marker>
+        </g>
+    );
+};
 
-function labelFontClass(doubledInDays:number) {
-    if (doubledInDays > 0 && doubledInDays <= 7) {
+function labelFontClass(doubledDays:number) {
+    if (doubledDays > 0 && doubledDays <= 7) {
         return "heavy";
-    } else if (doubledInDays >= 14) {
+    } else if (doubledDays >= 14) {
         return "light";
     } else {
         return "normal";
     }
 }
-
 
 interface StateAnnotationProps {
     centroid: Point;
@@ -292,7 +289,7 @@ interface StateAnnotationProps {
     orders?: string;
 }
 
-class StateAnnotation extends StateDatumComponent<StateAnnotationProps> {
+class StateAnnotation extends React.Component<StateAnnotationProps> {
 
     offset() {
         const offset = this.props.config.offset;
@@ -300,7 +297,7 @@ class StateAnnotation extends StateDatumComponent<StateAnnotationProps> {
     }
 
     render() {
-        const fontClass = labelFontClass(this.doubledInDays());
+        const fontClass = labelFontClass(doubledInDays(this.props));
         return (
             <g>
                 <Annotation
@@ -314,7 +311,7 @@ class StateAnnotation extends StateDatumComponent<StateAnnotationProps> {
                         {this.props.config.id} {this.props.orders}
                     </text>
                     <text x="16" y="16" fontSize={9} textAnchor="middle" className={fontClass}>
-                        {this.displayDeaths()}
+                        {displayDeaths(this.props)}
                     </text>
                 </Annotation>
             </g>

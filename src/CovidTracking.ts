@@ -1,3 +1,4 @@
+import parse from "date-fns/parse";
 
 const URL_COVID = "https://covidtracking.com/api/v1/states/daily.json";
 
@@ -87,10 +88,7 @@ function findDatumForDeaths(data:CovidDaily[], deaths:number) : CovidDaily | und
 }
 
 function parseDate(date:number) : Date {
-    const dateString = date.toString();
-    return new Date(parseInt(dateString.substr(0,4)),
-                    parseInt(dateString.substr(4,2)) - 1,
-                    parseInt(dateString.substr(6,2)));
+    return parse(`${date}`, "yyyyMMdd", new Date());
 }
 
 export { DATE_MIN, fetchCovidTrackingDailyData, findDatumForDate, findDatumForDeaths, parseDate, formatCovidDate };
