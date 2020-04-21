@@ -1,16 +1,16 @@
 import React from 'react';
-
-import "react-datepicker/dist/react-datepicker.css";
-import './App.css';
-
 import DatePicker from "react-datepicker";
 
 import { DATE_MIN,
          IndexedStateData,
          fetchCovidTrackingDailyData,
-         parseDate } from "./CovidTracking";
-import UsMapChart from "./MapChartUs";
+         parseDate } from "../CovidTracking";
+
 import PlaybackControls from "./PlaybackControls";
+import UsMapChart from "./MapChartUs";
+
+import "react-datepicker/dist/react-datepicker.css";
+import "../styles/App.css";
 
 interface AppState {
     date: Date;

@@ -9,13 +9,13 @@ import {
     Point
 } from "react-simple-maps";
 
-import { DATE_MIN, IndexedStateData, CovidDaily, findDatumForDate, findDatumForDeaths, parseDate, formatCovidDate } from "./CovidTracking";
+import { IndexedStateData, CovidDaily, findDatumForDate, findDatumForDeaths, parseDate } from "../CovidTracking";
 
 // mapping of fips-postal abbrev, pop, etc.
-import STATES from "./data/allStates.json";
+import STATES from "../data/allStates.json";
 
 // https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json
-import SHAPES from "./data/us-atlas-3-states-10m.json";
+import SHAPES from "../data/us-atlas-3-states-10m.json";
 
 interface StateConfig {
     id: string;  // abbrev
