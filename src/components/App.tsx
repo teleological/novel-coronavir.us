@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DatePicker from "react-datepicker";
+import addDays from "date-fns/addDays";
+import subDays from "date-fns/subDays";
 
 import { DATE_MIN,
          IndexedStateData,
@@ -20,117 +22,101 @@ interface AppState {
     player: null | ReturnType<typeof setInterval>;
 }
 
-class App extends React.Component<any,AppState> {
+const App : React.FC = () => {
+    const today = new Date();
 
-    constructor(props:any) {
-        super(props)
-        const today = new Date();
-        this.state = {
-            date: today,
-            minDate: DATE_MIN,
-            maxDate: today,
-            stateData: {},
-            player: null
-        };
-        this.onDateChange = this.onDateChange.bind(this);
-    }
-
-    onDateChange(date:Date) {
-        this.setState({ date: date });
-    }
-
-    rewind() {
-        this.setState({ date: this.state.minDate });
-    }
-
-    stepBackOneDay() {
-        const previousDay = new Date(this.state.date);
-        previousDay.setDate(this.state.date.getDate() - 1);
-        if (previousDay >= this.state.minDate) {
-            this.setState({ date: previousDay });
-        }
-    }
-
-    stepForwardOneDay() {
-        const nextDay = new Date(this.state.date);
-        nextDay.setDate(this.state.date.getDate() + 1);
-        if (nextDay <= this.state.maxDate) {
-            this.setState({ date: nextDay });
-        }
-    }
-
-    fastForward() {
-        this.setState({ date: this.state.maxDate });
-    }
-
-    componentDidMount() {
+    const [date, setDate] = useState<Date>(today);
+    const [minDate, _setMinDate] = useState<Date>(DATE_MIN);
+    const [maxDate, setMaxDate] = useState<Date>(today);
+    const [player, setPlayer] = useState<ReturnType<typeof setInterval> | null>(null);
+    const [indexedStateData, setIndexedStateData] = useState<IndexedStateData>({});
+    useEffect(() => {
         fetchCovidTrackingDailyData().then(dataByFips => {
-            let latest = parseDate(dataByFips["36"][0].date);
-            this.setState({
-                date: latest,
-                maxDate: latest,
-                stateData : dataByFips
-            });
+            const latest = parseDate(dataByFips["36"][0].date);
+            setDate(latest);
+            setMaxDate(latest);
+            setIndexedStateData(dataByFips);
         });
-    }
 
-    play() {
-        if (this.state.player === null) {
-            this.setState({ player: setInterval(() => {
-                if (this.state.date < this.state.maxDate) {
-                    this.stepForwardOneDay();
+        return () => {
+            if (player !== null) {
+                clearInterval(player);
+            }
+        };
+    });
+
+    const rewind = () => setDate(minDate);
+    const fastForward = () => setDate(maxDate);
+
+    const stepBackOneDay = () => {
+        const previousDay = subDays(date, 1);
+        if (previousDay >= minDate) {
+            setDate(previousDay);
+        }
+    };
+
+    const stepForwardOneDay = () => {
+        const nextDay = addDays(date, 1);
+        if (nextDay <= maxDate) {
+            setDate(nextDay);
+        }
+    };
+
+    const play = () => {
+        if (player === null) {
+            setPlayer(setInterval(() => {
+                if (date < maxDate) {
+                    stepForwardOneDay();
                 } else {
-                    this.pause();
+                    pause();
                 }
-            }, 1000) });
+            }, 1000));
         }
-    }
+    };
 
-    pause() {
-        if (this.state.player) {
-            clearInterval(this.state.player);
-            this.setState({ player: null });
+    const pause = () => {
+        if (player !== null) {
+            clearInterval(player);
+            setPlayer(null);
         }
-    }
+    };
 
-    render() {
-        return (
-            <>
-            <div className="App">
-				<PlaybackControls
-                  className="controls"
-				  isPlaying={this.state.player !== null}
-                  onPlaybackChange={
-                      isPlaying => isPlaying ? this.pause() : this.play()
-                  }
-				  hasPrevious={() => this.state.date > this.state.minDate}
-				  hasNext={() => this.state.date < this.state.maxDate}
-				  onPrevious={() => this.stepBackOneDay()}
-				  onNext={() => this.stepForwardOneDay()}
-				  onRewind={() => this.rewind()}
-				  onFastForward={() => this.fastForward()}
-				/>
-                <DatePicker
-                    minDate={this.state.minDate}
-                    maxDate={this.state.maxDate}
-                    selected={this.state.date}
-                    onChange={this.onDateChange} />
+    return (
+        <>
+        <div className="App">
+            <PlaybackControls
+              className="controls"
+              isPlaying={player !== null}
+              onPlaybackChange={
+                  isPlaying => isPlaying ? pause() : play()
+              }
+              hasPrevious={() => (date > minDate)}
+              hasNext={() => (date < maxDate)}
+              onPrevious={stepBackOneDay}
+              onNext={stepForwardOneDay}
+              onRewind={rewind}
+              onFastForward={fastForward}
+            />
+            <DatePicker
+                minDate={minDate}
+                maxDate={maxDate}
+                selected={date}
+                onChange={(date) => (date && setDate(date))} />
 
-                <hgroup>
-                    <h1>COVID-19 Deaths per Million</h1>
-                </hgroup>
+            <hgroup>
+                <h1>COVID-19 Deaths per Million</h1>
+            </hgroup>
 
-                <UsMapChart
-                    stateData={this.state.stateData}
-                    date={this.state.date} />
-            </div>
-            <small className="legend">
-                Deaths doubled in: <b>&lt;= 1 week</b>, <i>&gt;= 2 weeks</i><br/>
-                🛑 = statewide stay-at-home; ⚠️ = partial closure
-            </small>
-            </>
-        );
-    }
+            <UsMapChart
+                stateData={indexedStateData}
+                date={date} />
+        </div>
+        <small className="legend">
+            Deaths doubled in: <b>&lt;= 1 week</b>, <i>&gt;= 2 weeks</i><br/>
+            🛑 = statewide stay-at-home; ⚠️ = statewide closures
+        </small>
+        </>
+    );
 }
 
 export default App;

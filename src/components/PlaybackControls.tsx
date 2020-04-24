@@ -2,27 +2,19 @@ import React from 'react';
 
 import { Button, PlayerIcon, HtmlMouseEvent, MouseEventHandler } from 'react-player-controls';
 
-class Rewind extends React.Component {
-    render() {
-        return (
-            <svg viewBox="0 0 100 100" {...this.props}>
-                <polygon points="46 86.3 4 48 46 12.6 46 86.3"></polygon>
-                <polygon points="92 86.3 50 48 92 12.6 92 86.3"></polygon>
-            </svg>
-        );
-    }
-}
+const Rewind = (props:any) => (
+    <svg viewBox="0 0 100 100" {...props}>
+        <polygon points="46 86.3 4 48 46 12.6 46 86.3"></polygon>
+        <polygon points="92 86.3 50 48 92 12.6 92 86.3"></polygon>
+    </svg>
+);
 
-class FastForward extends React.Component {
-    render() {
-        return (
-            <svg viewBox="0 0 100 100" {...this.props}>
-                <polygon points="8 86.3 50 48 8 12.6 8 86.3"></polygon>
-                <polygon points="54 86.3 96 48 54 12.6 54 86.3"></polygon>
-            </svg>
-        );
-    }
-}
+const FastForward = (props:any) => (
+    <svg viewBox="0 0 100 100" {...props}>
+        <polygon points="8 86.3 50 48 8 12.6 8 86.3"></polygon>
+        <polygon points="54 86.3 96 48 54 12.6 54 86.3"></polygon>
+    </svg>
+);
 
 interface PlaybackControlsProps {
   className: string;
@@ -36,48 +28,43 @@ interface PlaybackControlsProps {
   onRewind: MouseEventHandler;
 }
 
-class PlaybackControls extends React.Component<PlaybackControlsProps> {
+const PlaybackControls : React.FC<PlaybackControlsProps> = ({ className, isPlaying, onPlaybackChange, hasPrevious, hasNext, onPrevious, onNext, onFastForward, onRewind }) => (
+    <div className={className}>
+        <Button
+            isEnabled={hasPrevious() !== false}
+            onClick={onRewind}>
+            <Rewind />
+        </Button>
 
-	render() {
-		return (
-			<div className={this.props.className}>
-				<Button
-					isEnabled={this.props.hasPrevious() !== false}
-					onClick={this.props.onRewind}>
-					<Rewind />
-				</Button>
+        <Button
+            isEnabled={hasPrevious() !== false}
+            onClick={onPrevious}>
+            <PlayerIcon.Previous />
+        </Button>
 
-				<Button
-					isEnabled={this.props.hasPrevious() !== false}
-					onClick={this.props.onPrevious}>
-					<PlayerIcon.Previous />
-				</Button>
+        <Button
+            isEnabled={hasNext() !== false}
+            onClick={(event:HtmlMouseEvent) =>
+                onPlaybackChange(isPlaying)
+            }>
+            {
+                isPlaying ?
+                    (<PlayerIcon.Pause />) : (<PlayerIcon.Play />)
+            }
+        </Button>
 
-				<Button
-					isEnabled={this.props.hasNext() !== false}
-					onClick={(event:HtmlMouseEvent) =>
-						this.props.onPlaybackChange(this.props.isPlaying)
-					}>
-					{
-						this.props.isPlaying ?
-							(<PlayerIcon.Pause />) : (<PlayerIcon.Play />)
-					}
-				</Button>
+        <Button
+            isEnabled={hasNext() !== false}
+            onClick={onNext}>
+              <PlayerIcon.Next />
+        </Button>
 
-				<Button
-					isEnabled={this.props.hasNext() !== false}
-					onClick={this.props.onNext}>
-					  <PlayerIcon.Next />
-				</Button>
-
-				<Button
-					isEnabled={this.props.hasNext() !== false}
-					onClick={this.props.onFastForward}>
-					  <FastForward />
-				</Button>
-			</div>
-		);
-	}
-}
+        <Button
+            isEnabled={hasNext() !== false}
+            onClick={onFastForward}>
+              <FastForward />
+        </Button>
+    </div>
+);
 
 export default PlaybackControls;
