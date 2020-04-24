@@ -1,6 +1,6 @@
 [
   { "id": "AL", "val": "01", "pop": 4903185, "urban": 59, "partial": 20200327, "stay": 20200404 },
-  { "id": "AK", "val": "02", "pop": 731545, "urban": 66, "partial": 20200318, "stay": 20200328 },
+  { "id": "AK", "val": "02", "pop": 731545, "urban": 66, "partial": 20200318, "stay": 20200328, "lifted": 20200424 },
   { "id": "AZ", "val": "04", "pop": 7278717, "urban": 89.8, "partial": 20200317, "stay": 20200331 },
   { "id": "AR", "val": "05", "pop": 3017825, "urban": 56.2, "stay": null, "partial": 20200320 },
   { "id": "CA", "val": "06", "pop": 39512223, "urban": 95, "stay": 20200319 },
@@ -35,7 +35,7 @@
   { "id": "NC", "val": "37", "pop": 10488084, "urban": 66.1, "partial": 20200317, "stay": 20200330 },
   { "id": "ND", "val": "38", "pop": 762062, "urban": 59.9, "stay": null, "partial": 20200320 },
   { "id": "OH", "val": "39", "pop": 11689100, "urban": 77.9, "partial": 20200315, "stay": 20200323 },
-  { "id": "OK", "val": "40", "pop": 3956971, "urban": 66.2, "stay": null, "partial": 20200401 },
+  { "id": "OK", "val": "40", "pop": 3956971, "urban": 66.2, "stay": null, "partial": 20200401, "lifted": 20200424 },
   { "id": "OR", "val": "41", "pop": 4217737, "urban": 81.0, "partial": 20200316, "stay": 20200323 },
   { "id": "PA", "val": "42", "pop": 12801989, "urban": 78.7, "partial": 20200316, "stay": 20200401 },
   { "id": "RI", "val": "44", "pop": 1059361, "urban": 90.7, "offset": [40, 0], "partial": 20200317, "stay": 20200328 },
