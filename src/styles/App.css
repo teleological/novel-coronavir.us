@@ -13,26 +13,35 @@ svg {
   vertical-align: middle;
 }
 
-h1 {
-    margin: 0;
-    font-size: 80%;
-}
-
-.react-datepicker-wrapper {
+.dateControls {
     float: right;
-    margin-right: 50px;
+    margin-top: 0;
+    margin-left: 30px;
 }
 
-.controls {
+.dateControls > div {
     float: right;
-    margin-right: 50px;
 }
 
-.controls button {
+input.datepicker {
+    width: 75px;
+    margin-right: 10px;
+    padding-left: 8px;
+}
+
+.playback {
+    float: right;
+    margin-top: 1px;
+}
+
+.playback button {
     height: 25px;
     width: 25px;
     padding: 4px;
-    -webkit-appearance: none !important;
+}
+
+.playback button:disabled {
+    fill: #888;
 }
 
 small {
@@ -41,12 +50,13 @@ small {
 
 .legend {
     float: right;
-    margin-right: 50px;
+    margin-bottom: 0;
 }
 
 .credits {
     float: right;
-    margin-right: 50px;
+    clear: both;
+    margin-right: 0;
     margin-top: 0;
 }
 
@@ -56,4 +66,82 @@ small {
 
 .light {
     font-style: italic;
+}
+
+@media only screen
+and (min-device-width: 375px)
+and (max-device-width: 812px)
+and (-webkit-min-device-pixel-ratio: 3) {
+
+    .dateControls {
+        margin-right: 0;
+    }
+
+    input.datepicker {
+        width: 90px;
+        height: 25px;
+        font-size: 18px;
+        margin-right: 0;
+        margin-top: 10px;
+    }
+
+    .playback {
+        margin-top: 8px;
+    }
+
+    .playback button {
+        height: 30px;
+        width: 30px;
+        margin-left: 5px;
+        margin-top: 0;
+        -webkit-appearance: none !important;
+    }
+
+    .legend {
+        float: left;
+    }
+
+    .credits {
+        float: left;
+    }
+
+    .source {
+        float: right;
+    }
+
+    .source img {
+        width: 16px;
+    }
+
+}
+
+@media only screen
+and (min-device-width: 375px)
+and (max-device-width: 812px)
+and (orientation: portrait ) {
+
+    .dateControls > div {
+        clear: right;
+    }
+
+}
+
+@media only screen
+and (min-device-width: 375px)
+and (max-device-width: 812px)
+and (orientation: landscape ) {
+
+    input.datepicker {
+        width: 120px;
+        height: 30px;
+        font-size: 20px;
+        margin-right: 10px;
+        margin-top: 8px;
+    }
+
+    .playback button {
+        height: 40px;
+        width: 40px;
+    }
+
 }

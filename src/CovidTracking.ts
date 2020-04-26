@@ -1,10 +1,5 @@
 import parse from "date-fns/parse";
 
-const URL_COVID = "https://covidtracking.com/api/v1/states/daily.json";
-
-// no data before March 4
-const DATE_MIN = new Date(2020, 2-1, 21);
-
 export interface CovidDaily {
     hash: string;
     date: number;
@@ -37,8 +32,13 @@ export interface CovidDaily {
     death?: number | null;
 }
 
-function fetchCovidTrackingDailyData() : Promise<IndexedStateData> {
-    const headers:any = { "Accept": "application/json" };
+export type IndexedCovidDaily = { [fips:string] : CovidDaily[] };
+
+const URL_COVID = "https://covidtracking.com/api/v1/states/daily.json";
+const DATE_MIN = new Date(2020, 2-1, 21);
+
+function fetchCovidTrackingDailyData() : Promise<IndexedCovidDaily> {
+    const headers = { "Accept": "application/json" };
     return fetch(URL_COVID, { headers: headers }).
         then(response => {
             if (response.status === 200) {
@@ -50,25 +50,16 @@ function fetchCovidTrackingDailyData() : Promise<IndexedStateData> {
         });
 }
 
-export type IndexedStateData = { [fips:string] : CovidDaily[] };
-
-function indexDataByFips(data:CovidDaily[]) : IndexedStateData {
-    const dataByFips:IndexedStateData = {};
-    data.forEach(datum => {
-        dataByFips[datum.fips] || (dataByFips[datum.fips] = []);
-        dataByFips[datum.fips].push(datum);
+function indexDataByFips(days:CovidDaily[]) : IndexedCovidDaily {
+    const daysByFips:IndexedCovidDaily = {};
+    days.forEach(day => {
+        daysByFips[day.fips] || (daysByFips[day.fips] = []);
+        daysByFips[day.fips].push(day);
     });
-    return dataByFips;
+    return daysByFips;
 }
 
-function findDatumForDate(data:CovidDaily[], date:Date) : CovidDaily | undefined {
-    if (data) {
-        const covidDate = formatCovidDate(date);
-        return data.find(datum => datum.date === covidDate);
-    }
-}
-
-function formatCovidDate(date:Date) {
+function formatCovidDate(date:Date) : number {
     const month = date.getMonth() + 1;
     const day = date.getDate();
     const dateString = date.getFullYear().toString() +
@@ -77,18 +68,8 @@ function formatCovidDate(date:Date) {
     return parseInt(dateString);
 }
 
-function findDatumForDeaths(data:CovidDaily[], deaths:number) : CovidDaily | undefined {
-    if (data) {
-        return data.find(datum => {
-            if (datum.death) {
-                return datum.death <= deaths;
-            }
-        });
-    }
-}
-
-function parseDate(date:number) : Date {
+function parseCovidDate(date:number) : Date {
     return parse(`${date}`, "yyyyMMdd", new Date());
 }
 
-export { DATE_MIN, fetchCovidTrackingDailyData, findDatumForDate, findDatumForDeaths, parseDate, formatCovidDate };
+export { DATE_MIN, fetchCovidTrackingDailyData, parseCovidDate, formatCovidDate };
