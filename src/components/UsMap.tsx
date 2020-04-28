@@ -48,7 +48,7 @@ class UsMap extends React.Component<UsMapProps> {
         return (
             <ComposableMap
                 projection={this.props.projection}
-                width={this.props.width}>
+                width={this.props.width}
                 height={this.props.height}>
                 <Geographies geography={this.props.shapes}>
                     {({ geographies }) => (

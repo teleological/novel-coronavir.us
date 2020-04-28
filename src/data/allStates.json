@@ -41,7 +41,7 @@
   { "id": "RI", "val": "44", "pop": 1059361, "urban": 90.7, "offset": [40, 0], "partial": 20200317, "stay": 20200328 },
   { "id": "SC", "val": "45", "pop": 5148714, "urban": 66.3, "partial": 20200318, "stay": 20200407 },
   { "id": "SD", "val": "46", "pop": 884659, "urban": 56.7, "partial": null, "stay": null },
-  { "id": "TN", "val": "47", "pop": 6833174, "urban": 66.4, "partial": 20200323, "stay": 20200331 },
+  { "id": "TN", "val": "47", "pop": 6833174, "urban": 66.4, "partial": 20200323, "stay": 20200331, "lifted": 20200427 },
   { "id": "TX", "val": "48", "pop": 28995881, "urban": 84.7, "partial": 20200320, "stay": 20200402 },
   { "id": "UT", "val": "49", "pop": 3205958, "urban": 90.6, "stay": null, "partial": 20200318 },
   { "id": "VT", "val": "50", "pop": 623989, "urban": 38.9, "offset": [-20, -40], "partial": 20200317, "stay": 20200325 },
